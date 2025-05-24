@@ -6,10 +6,10 @@ const Footer = () => {
       <div className="flex items-center gap-2">
         <FaEnvelope className="text-xl text-gray-400" />
         <a
-          href="mailto:inaciosilva.dev@gmail.com"
+          href="mailto:"
           className="hover:underline break-all"
         >
-          inaciosilva.dev@gmail.com
+          
         </a>
       </div>
     </footer>
