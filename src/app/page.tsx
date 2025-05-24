@@ -1,7 +1,5 @@
-import Header from "./components/Header";
+import Header from "./components/Login";
 import Home from "./components/Home";
-
-import Footer from "./components/Footer";
 
 
 export default function Page() {
@@ -11,11 +9,7 @@ export default function Page() {
       <Home />
       
       {/* 
-      <Header />
-      <AboutMe />
-      <Experience />     
-      <Projects />
-      <Skills />
+      <Login />
       <Footer /> */}
     </div>
   );

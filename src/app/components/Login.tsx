@@ -1,11 +1,11 @@
 "use client";
 
-const Header = () => {
+const Login = () => {
   return (
     <div className="w-full text-white mb-8">
-      <h1>Header</h1>
+      <h1>Login</h1>
     </div>
   );
 };
 
-export default Header;
+export default Login;
