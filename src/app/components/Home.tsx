@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Editor from "@monaco-editor/react";
@@ -20,6 +20,7 @@ interface Challenge {
     cpp: string;
   };
 }
+
 interface CommandResponse {
   error: string | null;
   stdout: string;
@@ -30,6 +31,7 @@ const LANGUAGES = ["javascript", "python", "java"];
 
 export default function MathCodeChallenge(param: any) {
   const [activeQuestion, setActiveQuestion] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState(0);
   const [minutesLeft, setMinutesLeft] = useState(20);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
@@ -38,42 +40,34 @@ export default function MathCodeChallenge(param: any) {
   const [languagePerQuestion, setLanguagePerQuestion] = useState<{ [key: number]: string }>({});
   const [codes, setCodes] = useState<{ [key: number]: string }>({});
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
   useEffect(() => {
     getQuestions();
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
   }, []);
 
   useEffect(() => {
     if (activeQuestion === null) return;
 
-    if (timerRef.current) clearInterval(timerRef.current);
+    setTimeLeft(20 * 60); // 20 minutes in seconds
+    setIsLocked(false);
 
-    timerRef.current = setInterval(() => {
-      setSecondsLeft((prevSeconds) => {
-        if (prevSeconds === 0) {
-          setMinutesLeft((prevMinutes) => {
-            if (prevMinutes === 0) {
-              clearInterval(timerRef.current!);
-              setIsLocked(true);
-              return 0;
-            }
-            setSecondsLeft(59);
-            return prevMinutes - 1;
-          });
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setIsLocked(true);
           return 0;
         }
-        return prevSeconds - 1;
+        return prev - 1;
       });
     }, 1000);
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    return () => clearInterval(timer);
   }, [activeQuestion]);
+
+  useEffect(() => {
+    setMinutesLeft(Math.floor(timeLeft / 60));
+    setSecondsLeft(timeLeft % 60);
+  }, [timeLeft]);
 
   const getQuestions = async () => {
     try {
@@ -149,7 +143,6 @@ export default function MathCodeChallenge(param: any) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Lista de Questões */}
         <div className="flex flex-col gap-4">
           {questions.map((question) => {
             const isDisabled = completedQuestions.includes(question.id);
@@ -187,12 +180,9 @@ export default function MathCodeChallenge(param: any) {
                     <p className="whitespace-pre-wrap text-gray-200 text-sm">{question.description}</p>
                     <Button
                       className="bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={(e) => {
+                      onClick={() => {
                         if (!isDisabled) {
                           setActiveQuestion(question.id);
-                          setIsLocked(false);
-                          setMinutesLeft(20);
-                          setSecondsLeft(0);
                         }
                       }}
                       disabled={isDisabled}
@@ -206,13 +196,11 @@ export default function MathCodeChallenge(param: any) {
           })}
         </div>
 
-        {/* Editor de Código */}
         <div className="flex flex-col gap-4">
           {activeQuestion && !completedQuestions.includes(activeQuestion) && (
             <>
               <div className="text-green-400 text-center text-xl">
-                ⏳ Tempo restante: {minutesLeft.toString().padStart(2, "0")}:
-                {secondsLeft.toString().padStart(2, "0")}
+                ⏳ Tempo restante: {minutesLeft.toString().padStart(2, "0")}:{secondsLeft.toString().padStart(2, "0")}
               </div>
               <Editor
                 height="400px"
@@ -233,19 +221,21 @@ export default function MathCodeChallenge(param: any) {
                 </Button>
                 <Button
                   className="bg-green-600 hover:bg-green-700 text-white"
-                  onClick={() => {
+                  onClick={(e) => {
+                    const timeSpent = 20 * 60 - timeLeft;
+                    const formattedTime = `${Math.floor(timeSpent / 60).toString().padStart(2, "0")}:${(timeSpent % 60).toString().padStart(2, "0")}`;
+
                     setCompletedQuestions((prev) => [...prev, activeQuestion]);
                     PostQuestios(
                       activeQuestion,
                       codes[activeQuestion],
                       languagePerQuestion[activeQuestion],
-                      `${(20 - minutesLeft - 1).toString().padStart(2, "0")}:${(60 - secondsLeft).toString().padStart(2, "0")}`
+                      formattedTime
                     );
                     setActiveQuestion(null);
                     setIsLocked(true);
-                    setMinutesLeft(20);
-                    setSecondsLeft(0);
-                    if (timerRef.current) clearInterval(timerRef.current);
+                    setTimeLeft(0);
+                    e.currentTarget.disabled = true;
                   }}
                 >
                   Enviar
