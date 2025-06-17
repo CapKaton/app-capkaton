@@ -7,12 +7,13 @@ import Editor from "@monaco-editor/react";
 import Image from "next/image";
 import capybaraLogo from "../../../public/capivara.png";
 import Footer from "./Footer";
-import { CodeSquare } from "lucide-react";
+import { useRouter } from 'next/navigation'
 
 interface Challenge {
   id: number;
   title: string;
   description: string;
+  quantidade_resposta:number;
   starterCode: {
     javascript: string;
     python: string;
@@ -40,10 +41,16 @@ export default function MathCodeChallenge(param: any) {
   const [languagePerQuestion, setLanguagePerQuestion] = useState<{ [key: number]: string }>({});
   const [codes, setCodes] = useState<{ [key: number]: string }>({});
 
+  const router = useRouter();
+  
   useEffect(() => {
     getQuestions();
   }, []);
 
+  useEffect(() => {
+    validaFinal();
+  }, [completedQuestions]);
+  
   useEffect(() => {
     if (activeQuestion === null) return;
 
@@ -69,9 +76,17 @@ export default function MathCodeChallenge(param: any) {
     setSecondsLeft(timeLeft % 60);
   }, [timeLeft]);
 
+  const validaFinal = (questionList?: Challenge[]) => {
+    const list = questionList ?? questions;
+
+    if (list.length > 0 && completedQuestions.length === list.length) {
+      router.push(`/Resultado/${param.groupId}`);
+    }
+  };
+  
   const getQuestions = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Challenge/getChallengeQuestion/1`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Challenge/getChallengeQuestion/1/${param.groupId}`);
       const apiResult: Challenge[] = await response.json();
       setQuestions(apiResult);
 
@@ -81,8 +96,19 @@ export default function MathCodeChallenge(param: any) {
         initialLang[q.id] = "javascript";
         initialCodes[q.id] = q.starterCode["javascript"];
       });
+      
+      let countAnsewer:number = 0
+      apiResult.forEach( (q) =>{
+          if (q.quantidade_resposta != 0) {
+            countAnsewer++
+            completedQuestions.push(q.id);
+            setCompletedQuestions(completedQuestions);
+          }
+        }
+      );
       setLanguagePerQuestion(initialLang);
       setCodes(initialCodes);
+      validaFinal(apiResult)
     } catch (error) {
       alert("Erro ao carregar questões. Por favor, informe a equipe Capkaton.");
     }
@@ -111,8 +137,9 @@ export default function MathCodeChallenge(param: any) {
 
   const PostQuestios = async (
     questionId: number,
+    groupId:number,
     questionAnswer: string,
-    questionResult: string,
+    questionlenguage: string,
     timeSpent: string
   ) => {
     try {
@@ -121,10 +148,10 @@ export default function MathCodeChallenge(param: any) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           challengeId: 1,
-          groupId: Number(param.groupId),
+          groupId:Number(groupId),
           questionId,
           questionAnswer,
-          questionResult,
+          questionlenguage,
           timeSpent,
         }),
       });
@@ -223,11 +250,12 @@ export default function MathCodeChallenge(param: any) {
                   className="bg-green-600 hover:bg-green-700 text-white"
                   onClick={(e) => {
                     const timeSpent = 20 * 60 - timeLeft;
-                    const formattedTime = `${Math.floor(timeSpent / 60).toString().padStart(2, "0")}:${(timeSpent % 60).toString().padStart(2, "0")}`;
+                    const formattedTime = `00:${Math.floor(timeSpent / 60).toString().padStart(2, "0")}:${(timeSpent % 60).toString().padStart(2, "0")}`;
 
                     setCompletedQuestions((prev) => [...prev, activeQuestion]);
                     PostQuestios(
                       activeQuestion,
+                      param.groupId,
                       codes[activeQuestion],
                       languagePerQuestion[activeQuestion],
                       formattedTime
@@ -245,7 +273,7 @@ export default function MathCodeChallenge(param: any) {
           )}
         </div>
       </div>
-
+      
       <Footer />
     </div>
   );
