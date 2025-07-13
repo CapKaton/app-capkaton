@@ -1,0 +1,22 @@
+# Ignorar arquivos de ambiente locais
+.env*
+!.env.production
+
+# Node modules (não devem ser copiados do host)
+node_modules
+
+# Logs e arquivos temporários
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Diretórios de build
+.next
+dist
+out
+
+# Cache de dependências
+.pnpm-store
+.cache
+.vscode
+.DS_Store

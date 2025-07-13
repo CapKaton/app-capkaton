@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  app-capkaton:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL:http://host.docker.internal:4000
+      API_URL:http://host.docker.internal:4000
