@@ -80,13 +80,21 @@ export default function MathCodeChallenge(param: any) {
     const list = questionList ?? questions;
 
     if (list.length > 0 && completedQuestions.length === list.length) {
+      new Promise(resolve => setTimeout(resolve, 10 * 1000));
       router.push(`/Resultado/${param.groupId}`);
     }
   };
   
   const getQuestions = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Challenge/getChallengeQuestion/1/${param.groupId}`);
+      const groupId = param.groupId
+      const response = await fetch(`/api/getChallengeQuestion`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ groupId }),
+      });
+
+      
       const apiResult: Challenge[] = await response.json();
       setQuestions(apiResult);
 
@@ -116,7 +124,7 @@ export default function MathCodeChallenge(param: any) {
 
   const TestCode = async (language: string, code: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/CodeExecuter/execute`, {
+      const response = await fetch(`/api/codeExecuter`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ language, code }),
@@ -143,7 +151,7 @@ export default function MathCodeChallenge(param: any) {
     timeSpent: string
   ) => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Challenge/postChallenge/`, {
+      await fetch(`/api/postChallenge/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

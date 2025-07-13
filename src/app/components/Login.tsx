@@ -12,7 +12,8 @@ const Login = () => {
   const handleClick = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Login/logon`, {
+
+      const response = await fetch('/api/logon', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -31,7 +32,6 @@ const Login = () => {
       const groupId = await response.json();
 
       router.push(`/home/${groupId}`);
-      //router.push(`/home/`)
     } catch (error) {
       alert("Ocorreu um erro inesperado no servidor. Por favor, informe a equipe Capkaton")
     }
